@@ -1,0 +1,25 @@
+services:
+  jupyter-app:
+    build:
+      context: .
+    image: ${DOCKER_IMAGE}
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
+    container_name: ${DOCKER_CONTAINER_NAME}
+    environment:
+      - PASSWORD=${JUPYTER_PASSWORD}
+    ports:
+      - ${JUPYTER_WORK_PORT}
+    restart: ${DOCKER_RESTART}
+    logging:
+      driver: ${DOCKER_LOGGING_DRIVER}
+      options:
+        max-size: ${DOCKER_LOGGING_SIZE}
+    volumes:
+      - ${DOCKER_VOLUME_WORK}
+      - ${DOCKER_VOLUME_CONFIG}
+    networks:
+      - ${DOCKER_NETWORK_NAME}
+
+networks:
+  app-net:
+    driver: ${DOCKER_NETWORK_TYPE}
