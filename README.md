@@ -16,6 +16,8 @@
 
 ```
 .
+├── .env.amd64                 # Docker Compose 配置文件所需 amd64 环境，用于多架构配置（需要更名为 .env ）
+├── .env.arm64                 # Docker Compose 配置文件所需 arm64 环境，用于多架构配置（需要更名为 .env ）
 ├── docker-compose.yml         # Docker Compose 配置文件，用于多容器编排（例如搭配其它服务时使用）
 ├── Dockerfile                 # 构建 Docker 镜像的说明文件
 ├── LICENSE                    # 许可协议文件
@@ -48,6 +50,8 @@
 ## 快速入门
 
 ### 通过 docker-compose 文件启动（如果你在 docker-compose.yml 中配置了服务）：
+
+根据你的系统cpu架构选择正确的环境文件比如 .env.arm64 修改完善后，改名为 .env 以支持 docker-compose.yml 文件
 
 ```bash
 docker-compose up -d
