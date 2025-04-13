@@ -447,12 +447,14 @@ CUSTOM_DIR=${CUSTOM_DIR:-'/media/psf/KingStonSSD1T/docker-workspace'}
 REPO=${REPO:-docker-arch-miniforge-jupyter}
 BUILDX_CACHE=${BUILDX_CACHE:-'/media/psf/KingStonSSD1T/docker_buildx.cache'}
 
-## 创建目录信息并打印常规信息
+## 创建缓存目录和新缓存目录
 mkdir -pv ${BUILDX_CACHE}
+mkdir -pv ${BUILDX_CACHE}-new
 echo ${USERNAME}
 echo ${DOCKER_DOMAIN}
 echo ${CUSTOM_DIR}/${REPO}
 echo ${BUILDX_CACHE}
+echo ${BUILDX_CACHE}-new
 
 ## 进入到项目目录
 cd ${CUSTOM_DIR}/${REPO}
@@ -487,17 +489,24 @@ docker-buildx inspect --bootstrap
 #  --cache-from 从 ${BUILDX_CACHE} 目录中加载缓存数据，加速构建。
 #  --cache-to 将新生成的缓存数据写入到 ${BUILDX_CACHE}-new 目录中。
 #  --load 表示将构建完成的镜像加载到 Docker 本地镜像库中（对于跨平台构建，注意在某些情况下可能只能加载当前体系结构的镜像）。
-#  最近发现云端镜像仓库有 unknown/unknown 未识别架构的问题，如下方案可以规避云端仓库 https://github.com/docker/buildx/issues/1964#issuecomment-1644634461
-#  --output type=oci-mediatypes=false 关闭OCI索引
-#  --provenance=false 设置为不生成来源信息
+#  --push 表示将构建完成的镜像推送到 Docker 远端镜像库中 
+#  --output 导出器以下是type参数信息
+#    type=image 导出类型为镜像
+#    name=ghcr.io/469138946ba5fa/docker-arch-miniforge-jupyter:latest 镜像名
+#    compression=zstd 压缩类型 zstd 也支持 gzip 和 estargz
+#    compression-level=22 设置 zstd 压缩级别为 22 ，gzip 和 estargz 的范围是 0-9 ， zstd 的范围是 0-22
+#    force-compression=true 强制重压缩
+#  最近发现云端镜像仓库有 unknown/unknown 未识别架构的问题，如下两个方案可以规避云端仓库 https://github.com/docker/buildx/issues/1964#issuecomment-1644634461
+#  --output 导出器 type=oci-mediatypes=false 关闭OCI索引
+#  --provenance=false 或者设置为不生成来源信息，但禁用 provenance 信息，意味着你失去了有关构建过程的详细记录和签名。这对追踪镜像的安全性和来源可能会有一些影响。
 
 # buildx build load
 ## 单架构本地存储，比如 linux/arm64/v8
 docker-buildx build --platform linux/arm64/v8 \
---tag ${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest \
---cache-from type=local,src=${BUILDX_CACHE} \
---cache-to type=local,dest=${BUILDX_CACHE}-new,mode=max \
---load .
+  --cache-from type=local,src=${BUILDX_CACHE} \
+  --cache-to type=local,dest=${BUILDX_CACHE}-new,mode=max \
+  --output type=image,name=${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest,compression=zstd,compression-level=22,force-compression=true \
+  --load .
 
 # docker-compose test
 ## docker-compose 运行测试
@@ -510,13 +519,33 @@ docker-compose logs -f
 docker-compose stats
 
 # buildx build push
-## 多架构上传仓库，比如 linux/arm64/v8,linux/amd64
-docker-buildx build --platform linux/arm64/v8,linux/amd64 \
---tag ${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest \
---cache-from type=local,src=${BUILDX_CACHE} \
---cache-to type=local,dest=${BUILDX_CACHE}-new,mode=max \
---output type=oci-mediatypes=false \
---push .
+## 多架构上传仓库，比如 linux/arm64/v8,linux/amd64，去除oci索引，防止 unknown/unknown
+## 正常构建镜像会很大，但是时间很短，上传会浪费大量带宽
+docker buildx build \
+  --platform linux/arm64/v8,linux/amd64 \
+  --cache-from type=local,src=${BUILDX_CACHE} \
+  --cache-to type=local,dest=${BUILDX_CACHE}-new,mode=max \
+  --output type=image,name=${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest,oci-mediatypes=false \
+  --push .
+
+## 或者多架构上传仓库，比如 linux/arm64/v8,linux/amd64，压缩并去除oci索引，防止 unknown/unknown
+## 但压缩会意味着浪费更多的时间，然而我并不清楚压缩和正常构建之间的关系
+docker buildx build \
+  --platform linux/arm64/v8,linux/amd64 \
+  --cache-from type=local,src=${BUILDX_CACHE} \
+  --cache-to type=local,dest=${BUILDX_CACHE}-new,mode=max \
+  --output type=image,name=${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest,compression=zstd,compression-level=22,force-compression=true,oci-mediatypes=false \
+  --push .
+
+## 或者多架构上传仓库，比如 linux/arm64/v8,linux/amd64，压缩，不生成镜像来源，防止 unknown/unknown
+## 禁用 provenance 信息，意味着你失去了有关构建过程的详细记录和签名。这对追踪镜像的安全性和来源可能会有一些影响。
+docker buildx build \
+  --platform linux/arm64/v8,linux/amd64 \
+  --cache-from type=local,src=${BUILDX_CACHE} \
+  --cache-to type=local,dest=${BUILDX_CACHE}-new,mode=max \
+  --output type=image,name=${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest,compression=zstd,compression-level=22,force-compression=true \
+  --provenance=false
+  --push .
 
 # docker build clean
 ## 清理所有停止的容器
@@ -550,9 +579,9 @@ docker-buildx ls
 rm -frv ${BUILDX_CACHE}
 
 # create new buildx cache dir
-## 使用空目录替代旧缓存目录
-mkdir -pv ${BUILDX_CACHE}-new
+## 使用  docker buildx 新的缓存替换旧缓存
 mv -fv ${BUILDX_CACHE}-new ${BUILDX_CACHE}
+mkdir -pv  ${BUILDX_CACHE}-new
 ```
 
 ## 起因与内心：
