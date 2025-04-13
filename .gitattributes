@@ -1,4 +1,7 @@
-# 行末保持 LF
+# 禁用自动行尾符转换
+* -text
+
+# 强制特定文件使用 LF 结尾
 *.sh text eol=lf
 *.py text eol=lf
 *.md text eol=lf
@@ -9,3 +12,6 @@ LICENSE text eol=lf
 # 对常见二进制文件做明确设置
 *.png binary
 *.jpg binary
+*.gif binary
+*.zip binary
+*.tar binary

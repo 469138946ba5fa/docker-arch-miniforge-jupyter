@@ -1,5 +1,10 @@
+# 忽略 macOS 系统文件
 .DS_Store
+# 忽略环境配置文件
 .env
+# 忽略所有的日志文件
 *.log
-/tmp
+# 忽略临时文件夹
+/tmp/
+# 忽略 JetBrains 项目配置文件夹
 .idea/
