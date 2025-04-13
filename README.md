@@ -83,7 +83,21 @@ docker-compose restart
 
 ### 测试内核
 
-在 Jupyter Notebook 中，新建 Notebook 时，可以选择不同的内核（例如 C++11）。可将以下代码分别粘贴到 cell 中测试：
+在 Jupyter Notebook 中，新建 Notebook 时，可以选择不同的内核（例如 Python Java C++11）。可将以下代码分别粘贴到不同内核 ipynb 页面的 cell 中测试：
+
+- **Python 示例**
+
+  ```python
+  print('Hello, World! (Python)')
+  word_str='af5ab649831964'
+  word_str[::-1]
+  ```
+
+- **Java 示例**
+
+  ```java
+  System.out.println("Hello, World! (Java)");
+  ```
 
 - **C++11 示例**
 
