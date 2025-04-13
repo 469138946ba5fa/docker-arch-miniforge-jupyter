@@ -31,11 +31,12 @@ ENV LANG=zh_CN.UTF-8 \
     PATH=${MINIFORGE_DIR}/bin:${BUILD_HOME}/.jbang/bin:${JAVA_HOME}/bin:${PATH}
 
 # 添加常用LABEL（根据需要修改）添加标题 版本 作者 代码仓库 镜像说明，方便优化
-LABEL org.opencontainers.image.title="Miniforge Jupyter" \
+LABEL org.opencontainers.image.description="miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器." \
+      org.opencontainers.image.title="Miniforge Jupyter" \
       org.opencontainers.image.version="1.0.0" \
       org.opencontainers.image.authors="469138946ba5fa <af5ab649831964@gmail.com>" \
       org.opencontainers.image.source="https://github.com/469138946ba5fa/docker-arch-miniforge-jupyter" \
-      org.opencontainers.image.description="miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器."
+      org.opencontainers.image.licenses="MIT"
 
 # 设置工作目录 /notebook 仅用于 Notebook 数据挂载（保持干净）
 WORKDIR /notebook

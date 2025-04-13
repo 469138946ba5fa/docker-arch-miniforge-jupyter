@@ -65,16 +65,16 @@ if [ ! -f "${HOME}/.jupyter/jupyter_server_config.py" ]; then
     jupyter-server --generate-config -y
 fi
 
-# 设置密码：如果PASSWORD变量未设置，则采用默认值
-if [[ -z "${PASSWORD:-}" ]]; then
-    log_warning "PASSWORD variable not set, using default value: 123456"
-    export PASSWORD=123456
+# 设置密码：如果JUPYTER_PASSWORD变量未设置，则采用默认值
+if [[ -z "${JUPYTER_PASSWORD:-}" ]]; then
+    log_warning "JUPYTER_PASSWORD variable not set, using default value: 123456"
+    export JUPYTER_PASSWORD=123456
 fi
 
 # 生成密码哈希（新版Jupyter使用 Notebook.auth 模块产生密码哈希）
-PASSWORD_HASH=$(python -c "from notebook.auth import passwd; print(passwd('${PASSWORD}'))")
+JUPYTER_PASSWORD_HASH=$(python -c "from notebook.auth import passwd; print(passwd('${JUPYTER_PASSWORD}'))")
 
-log_info "Appending custom configuration for default shell and password to Jupyter server config..."
+log_info "Appending custom configuration for default shell and JUPYTER_PASSWORD to Jupyter server config..."
 
 # 将 Terminal 默认 shell 和密码写入 jupyter_server_config.py
 cat <<EOF >> "${HOME}/.jupyter/jupyter_server_config.py"
@@ -82,7 +82,7 @@ cat <<EOF >> "${HOME}/.jupyter/jupyter_server_config.py"
 # ------------------------------
 # Custom configuration appended automatically via startup script
 c.ServerApp.terminado_settings = {'shell_command': ['/bin/bash']}
-c.ServerApp.password = "${PASSWORD_HASH}"
+c.ServerApp.password = "${JUPYTER_PASSWORD_HASH}"
 # ------------------------------
 EOF
 

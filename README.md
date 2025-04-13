@@ -138,6 +138,8 @@ docker-compose restart
   ```
 
 ## 已知问题与调试
+- github 仓库 ghcr.io 推送一直不显示 docker 镜像标签信息☹️
+- github 仓库 ghcr.io 推送 --output 导出器 type=oci-mediatypes=false 关闭OCI索引，然而失败了☹️
 - amd64 架构镜像 C++17 崩溃，arm64 架构镜像 C++14/17 崩溃  
 - 如遇 C++14/C++17/C++20 内核加载时出现标准库或 ABI 不匹配错误，请检查容器中安装的 GCC/libstdc++ 版本与 xeus-cling 预编译包是否一致。可考虑在 kernel.json 中添加额外编译参数（例如 `-D_GLIBCXX_USE_CXX11_ABI=1`）或调整基础镜像，失败的思路☹️。
 - 若 Jupyter 配置（密码、默认终端或主题）未生效，请检查容器启动日志中是否正确生成 `~/.jupyter` 下的配置文件。
@@ -414,7 +416,7 @@ docker-buildx version
 docker buildx version
 ```
 
-在项目目录下执行构建镜像具体流程命令 docker buildx build ：
+docker buildx build 在项目目录下执行构建镜像具体流程命令 ：
 
 ```shell
 # docker proxy pull
@@ -488,6 +490,7 @@ docker-buildx inspect --bootstrap
 #  --no-cache 选项来避免使用过多的缓存，不要与 --cache-from 和 --cache-to 合用
 #  --cache-from 从 ${BUILDX_CACHE} 目录中加载缓存数据，加速构建。
 #  --cache-to 将新生成的缓存数据写入到 ${BUILDX_CACHE}-new 目录中。
+#  --label 添加镜像标签应该和 Dockerfile 中的 LABEL 等效，但是推送一直不显示 docker 镜像标签信息☹️
 #  --load 表示将构建完成的镜像加载到 Docker 本地镜像库中（对于跨平台构建，注意在某些情况下可能只能加载当前体系结构的镜像）。
 #  --push 表示将构建完成的镜像推送到 Docker 远端镜像库中 
 #  --output 导出器以下是type参数信息
@@ -496,16 +499,25 @@ docker-buildx inspect --bootstrap
 #    compression=zstd 压缩类型 zstd 也支持 gzip 和 estargz
 #    compression-level=22 设置 zstd 压缩级别为 22 ，gzip 和 estargz 的范围是 0-9 ， zstd 的范围是 0-22
 #    force-compression=true 强制重压缩
-#  最近发现云端镜像仓库有 unknown/unknown 未识别架构的问题，如下两个方案可以规避云端仓库 https://github.com/docker/buildx/issues/1964#issuecomment-1644634461
-#  --output 导出器 type=oci-mediatypes=false 关闭OCI索引
-#  --provenance=false 或者设置为不生成来源信息，但禁用 provenance 信息，意味着你失去了有关构建过程的详细记录和签名。这对追踪镜像的安全性和来源可能会有一些影响。
+#  最近发现云端镜像仓库有 unknown/unknown 未识别架构的问题，如下方案可以规避云端仓库 https://github.com/docker/buildx/issues/1964#issuecomment-1644634461
+#  --output 导出器 type=oci-mediatypes=false 关闭OCI索引，然而失败了☹️
+#  --provenance=false 设置为不生成来源信息，但禁用 provenance 信息，意味着你失去了有关构建过程的详细记录和签名。这对追踪镜像的安全性和来源可能会有一些影响。
+#  参考 https://docs.docker.com/build/building/variables/#buildx_no_default_attestations
+#  export BUILDX_NO_DEFAULT_ATTESTATIONS=1 添加环境变量禁用来源证明应该和 --provenance=false 等效
 
 # buildx build load
-## 单架构本地存储，比如 linux/arm64/v8
+## 单架构本地存储，比如 linux/arm64/v8 ，压缩，去除oci索引
+export BUILDX_NO_DEFAULT_ATTESTATIONS=1
 docker-buildx build --platform linux/arm64/v8 \
   --cache-from type=local,src=${BUILDX_CACHE} \
   --cache-to type=local,dest=${BUILDX_CACHE}-new,mode=max \
-  --output type=image,name=${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest,compression=zstd,compression-level=22,force-compression=true \
+  --label "org.opencontainers.image.description=miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器." \
+  --label "org.opencontainers.image.title=Miniforge Jupyter" \
+  --label "org.opencontainers.image.version=1.0.0" \
+  --label "org.opencontainers.image.authors=469138946ba5fa <af5ab649831964@gmail.com>" \
+  --label "org.opencontainers.image.source=https://github.com/469138946ba5fa/docker-arch-miniforge-jupyter" \
+  --label "org.opencontainers.image.licenses=MIT" \
+  --output type=image,name=${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest,compression=zstd,compression-level=22,force-compression=true,oci-mediatypes=false \
   --load .
 
 # docker-compose test
@@ -521,17 +533,31 @@ docker-compose stats
 # buildx build push
 ## 多架构上传仓库，比如 linux/arm64/v8,linux/amd64，去除oci索引，防止 unknown/unknown
 ## 正常构建镜像会很大，但是时间很短，上传会浪费大量带宽
+export BUILDX_NO_DEFAULT_ATTESTATIONS=1
 docker buildx build \
   --platform linux/arm64/v8,linux/amd64 \
+  --label "org.opencontainers.image.description=miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器." \
+  --label "org.opencontainers.image.title=Miniforge Jupyter" \
+  --label "org.opencontainers.image.version=1.0.0" \
+  --label "org.opencontainers.image.authors=469138946ba5fa <af5ab649831964@gmail.com>" \
+  --label "org.opencontainers.image.source=https://github.com/469138946ba5fa/docker-arch-miniforge-jupyter" \
+  --label "org.opencontainers.image.licenses=MIT" \
   --cache-from type=local,src=${BUILDX_CACHE} \
   --cache-to type=local,dest=${BUILDX_CACHE}-new,mode=max \
   --output type=image,name=${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest,oci-mediatypes=false \
   --push .
 
 ## 或者多架构上传仓库，比如 linux/arm64/v8,linux/amd64，压缩并去除oci索引，防止 unknown/unknown
-## 但压缩会意味着浪费更多的时间，然而我并不清楚压缩和正常构建之间的关系
+## 但压缩会意味着浪费更多的时间，但是也许会节省带宽，然而我并不清楚压缩和正常构建之间的关系
+export BUILDX_NO_DEFAULT_ATTESTATIONS=1
 docker buildx build \
   --platform linux/arm64/v8,linux/amd64 \
+  --label "org.opencontainers.image.description=miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器." \
+  --label "org.opencontainers.image.title=Miniforge Jupyter" \
+  --label "org.opencontainers.image.version=1.0.0" \
+  --label "org.opencontainers.image.authors=469138946ba5fa <af5ab649831964@gmail.com>" \
+  --label "org.opencontainers.image.source=https://github.com/469138946ba5fa/docker-arch-miniforge-jupyter" \
+  --label "org.opencontainers.image.licenses=MIT" \
   --cache-from type=local,src=${BUILDX_CACHE} \
   --cache-to type=local,dest=${BUILDX_CACHE}-new,mode=max \
   --output type=image,name=${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest,compression=zstd,compression-level=22,force-compression=true,oci-mediatypes=false \
@@ -539,13 +565,27 @@ docker buildx build \
 
 ## 或者多架构上传仓库，比如 linux/arm64/v8,linux/amd64，压缩，不生成镜像来源，防止 unknown/unknown
 ## 禁用 provenance 信息，意味着你失去了有关构建过程的详细记录和签名。这对追踪镜像的安全性和来源可能会有一些影响。
+export BUILDX_NO_DEFAULT_ATTESTATIONS=1
 docker buildx build \
   --platform linux/arm64/v8,linux/amd64 \
+  --label "org.opencontainers.image.description=miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器." \
+  --label "org.opencontainers.image.title=Miniforge Jupyter" \
+  --label "org.opencontainers.image.version=1.0.0" \
+  --label "org.opencontainers.image.authors=469138946ba5fa <af5ab649831964@gmail.com>" \
+  --label "org.opencontainers.image.source=https://github.com/469138946ba5fa/docker-arch-miniforge-jupyter" \
+  --label "org.opencontainers.image.licenses=MIT" \
   --cache-from type=local,src=${BUILDX_CACHE} \
   --cache-to type=local,dest=${BUILDX_CACHE}-new,mode=max \
   --output type=image,name=${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest,compression=zstd,compression-level=22,force-compression=true \
   --provenance=false
   --push .
+
+# 查看 Docker 镜像元数据信息
+docker inspect ${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest
+# 查看 Docker 镜像清单（Manifest）。JSON 格式 Docker 镜像清单包含了有关镜像的元数据，包括层（layers）、架构（architecture）、操作系统（OS）、标签（tags）等信息
+docker manifest inspect ${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest
+# 启用调试模式后，命令会输出更多的详细信息，包括 Docker 连接的网络请求、API 调用等
+docker --debug manifest inspect ${DOCKER_DOMAIN}/${USERNAME}/${REPO}
 
 # docker build clean
 ## 清理所有停止的容器
@@ -601,6 +641,8 @@ mkdir -pv  ${BUILDX_CACHE}-new
 [ubuntu install docker](https://docs.docker.com/engine/install/ubuntu/)  
 [docker-install](https://github.com/docker/docker-install)  
 [docker buildx](https://docs.docker.com/build/builders/)  
+[docker buildx output](https://docs.docker.com/build/exporters/#export-filesystem)  
+[buildx_no_default_attestations](https://docs.docker.com/build/building/variables/#buildx_no_default_attestations)  
 [docker compose](https://docs.docker.com/compose/install/linux/)  
 [github docker buildx](https://github.com/docker/buildx)  
 [github docker compose](https://github.com/docker/compose)  
