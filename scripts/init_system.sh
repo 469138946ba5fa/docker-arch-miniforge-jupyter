@@ -71,11 +71,51 @@ update-locale LANG=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8 LANGUAGE=zh_CN.UTF-8 LC_CTYPE=
 
 # 将激活环境及 locale 配置写入配置文件中，保留长期有效
 # 在 docker 非交互式容器中毫无意义，可以没有，但是我希望，这能帮助我理解
-cat << '469138946ba5fa' | tee -a /etc/default/locale /etc/environment "${HOME}/.bashrc" "${HOME}/.profile"
+cat << '469138946ba5fa' | tee -a /etc/default/locale /etc/environment "${HOME}/.profile"
 LANG=zh_CN.UTF-8
 LC_ALL=zh_CN.UTF-8
 LANGUAGE=zh_CN.UTF-8
 LC_CTYPE=zh_CN.UTF-8
 469138946ba5fa
+
+# 获取当前 shell 名称
+CURRENT_SHELL=$(basename "${SHELL}")
+
+log_info "Detected shell: ${CURRENT_SHELL}"
+
+case "${CURRENT_SHELL}" in
+  bash)
+    if ! grep -qEi 'LANG|LC_ALL|LANGUAGE|LC_CTYPE' "${HOME}/.bashrc"; then
+      log_info "Initializing LANG|LC_ALL|LANGUAGE|LC_CTYPE for bash..."
+      # 固化 LANG|LC_ALL|LANGUAGE|LC_CTYPE 环境
+      # 在 docker 非交互式容器中毫无意义，可以没有，但是我希望，这能帮助我理解
+      conda init bash
+      cat << '469138946ba5fa' | tee -a /etc/skel/.bashrc "${HOME}/.bashrc"
+LANG=zh_CN.UTF-8
+LC_ALL=zh_CN.UTF-8
+LANGUAGE=zh_CN.UTF-8
+LC_CTYPE=zh_CN.UTF-8
+469138946ba5fa
+    fi
+    ;;
+  zsh)
+    if ! grep -qEi 'LANG|LC_ALL|LANGUAGE|LC_CTYPE' "${HOME}/.zshrc"; then
+      log_info "Initializing LANG|LC_ALL|LANGUAGE|LC_CTYPE for zsh..."
+      # 固化 LANG|LC_ALL|LANGUAGE|LC_CTYPE 环境
+      # 在 docker 非交互式容器中毫无意义，可以没有，但是我希望，这能帮助我理解
+      conda init zsh
+      cat << '469138946ba5fa' | tee -a /etc/skel/.zshrc "${HOME}/.zshrc"
+LANG=zh_CN.UTF-8
+LC_ALL=zh_CN.UTF-8
+LANGUAGE=zh_CN.UTF-8
+LC_CTYPE=zh_CN.UTF-8
+469138946ba5fa
+    fi
+    ;;
+  *)
+    log_error "Unsupported shell: ${CURRENT_SHELL}"
+    exit 1
+    ;;
+esac
 
 log_info "System initialization completed."

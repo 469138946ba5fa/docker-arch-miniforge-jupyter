@@ -125,7 +125,9 @@ tar xvf "/tmp/${TARGET_FILE}" -C /opt/
 newjdk=$(ls -1d /opt/jdk* | sort | tail -n 1)
 ln -fs "${newjdk}" "${HOME}/.jbang/currentjdk"
 
-cat << '469138946ba5fa' | tee -a /etc/default/locale /etc/environment "${HOME}/.profile"
+# 将激活环境写入配置文件中，保留长期有效
+# 在 docker 非交互式容器中毫无意义，可以没有，但是我希望，这能帮助我理解
+cat << '469138946ba5fa' | tee -a /etc/environment "${HOME}/.profile"
 export JAVA_HOME=${HOME}/.jbang/currentjdk
 export CLASSPATH=.:${JAVA_HOME}/lib
 export PATH=${PATH}:${JAVA_HOME}/bin
@@ -138,8 +140,10 @@ log_info "Detected shell: ${CURRENT_SHELL}"
 
 case "${CURRENT_SHELL}" in
   bash)
-    if ! grep -q "jdk initialize" "${HOME}/.bashrc"; then
+    if ! grep -qEi 'JAVA_HOME|CLASSPATH' "${HOME}/.bashrc"; then
       log_info "Initializing jdk for bash..."
+      # 固化 jdk 环境
+      # 在 docker 非交互式容器中毫无意义，可以没有，但是我希望，这能帮助我理解
       cat << '469138946ba5fa' | tee -a /etc/skel/.bashrc "${HOME}/.bashrc"
 export JAVA_HOME=${HOME}/.jbang/currentjdk
 export CLASSPATH=.:${JAVA_HOME}/lib
@@ -148,8 +152,10 @@ export PATH=${PATH}:${JAVA_HOME}/bin
     fi
     ;;
   zsh)
-    if ! grep -q "jdk initialize" "${HOME}/.zshrc"; then
+    if ! grep -qEi 'JAVA_HOME|CLASSPATH' "${HOME}/.zshrc"; then
       log_info "Initializing jdk for zsh..."
+      # 固化 jdk 环境
+      # 在 docker 非交互式容器中毫无意义，可以没有，但是我希望，这能帮助我理解
       cat << '469138946ba5fa' | tee -a /etc/skel/.zshrc "${HOME}/.zshrc"
 export JAVA_HOME=${HOME}/.jbang/currentjdk
 export CLASSPATH=.:${JAVA_HOME}/lib

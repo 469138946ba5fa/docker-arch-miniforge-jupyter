@@ -10,6 +10,7 @@ log_info "Starting Jupyter environment setup..."
 
 # miniforge 软件源
 # export CONDA_CHANNELS="${CONDA_CHANNELS:-defaults}"
+# export PIP_CHANNELS='https://pypi.org/simple'
 
 # 初始化 Miniforge 环境
 # export PATH=${MINIFORGE_DIR}/bin:${PATH}
@@ -17,8 +18,9 @@ log_info "Starting Jupyter environment setup..."
 # 如果你需要这个，就执行，之后可能还需要手动写入到 bash 或 zsh 的配置文件中，以持续生效
 # 但是我不确定是不是所有的 linux 都会 lib 缺失，先注释吧
 #export LD_LIBRARY_PATH=${MINIFORGE_DIR}/lib:${LD_LIBRARY_PATH}
-# 指定 cling 的 python 版本
-# export PY_VERSION=3.12.10
+# 指定 python 版本
+#export PY_VERSION=3.12.10
+#export CONDA_PY_ENV=py${PY_VERSION}
 
 # 所需软件包列表
 packages=(
@@ -64,19 +66,20 @@ else
 fi
 log_info "latest python version "${PY_VERSION}
 
-# mamba 安装 python ${PY_VERSION} 版本并将环境命名为 cling
-mamba create -n cling python=${PY_VERSION} -c ${CONDA_CHANNELS} -y
+# mamba 安装 python ${PY_VERSION} 版本并将环境命名为 ${CONDA_PY_ENV}
+mamba create -n ${CONDA_PY_ENV} python=${PY_VERSION} -c ${CONDA_CHANNELS} -y
 
-# 明确激活cling，确保非交互式环境变量生效，规避 ADDR2LINE: unbound variable
+# 明确激活 ${CONDA_PY_ENV} ，确保非交互式环境变量生效，规避 ADDR2LINE: unbound variable
 set +u
-# 激活cling
-source activate cling
+# 激活 ${CONDA_PY_ENV}
+source activate ${CONDA_PY_ENV}
 set -u
 
 
-# 将激活环境及 locale 配置写入配置文件中，保留长期有效
-cat << 469138946ba5fa | tee -a /etc/default/locale /etc/environment "${HOME}/.profile"
-conda activate cling
+# 将激活环境写入配置文件中，保留长期有效
+# 在 docker 非交互式容器中毫无意义，可以没有，但是我希望，这能帮助我理解
+cat << 469138946ba5fa | tee -a /etc/environment "${HOME}/.profile"
+conda activate ${CONDA_PY_ENV}
 469138946ba5fa
 
 # 获取当前 shell 名称
@@ -86,19 +89,19 @@ log_info "Detected shell: ${CURRENT_SHELL}"
 
 case "${CURRENT_SHELL}" in
   bash)
-    if ! grep -q "cling initialize" "${HOME}/.bashrc"; then
-      log_info "Initializing cling for bash..."
-      # 固化 cling 环境
+    if ! grep -q "conda activate ${CONDA_PY_ENV}" "${HOME}/.bashrc"; then
+      log_info "Initializing ${CONDA_PY_ENV} for bash..."
+      # 固化 ${CONDA_PY_ENV} 环境
       # 在 docker 非交互式容器中毫无意义，可以没有，但是我希望，这能帮助我理解
-      echo "conda activate cling" | tee -a /etc/skel/.bashrc "${HOME}/.bashrc"
+      echo "conda activate ${CONDA_PY_ENV}" | tee -a /etc/skel/.bashrc "${HOME}/.bashrc"
     fi
     ;;
   zsh)
-    if ! grep -q "cling initialize" "${HOME}/.zshrc"; then
-      log_info "Initializing cling for zsh..."
-      # 固化 cling 环境
+    if ! grep -q "conda activate ${CONDA_PY_ENV}" "${HOME}/.zshrc"; then
+      log_info "Initializing ${CONDA_PY_ENV} for zsh..."
+      # 固化 ${CONDA_PY_ENV} 环境
       # 在 docker 非交互式容器中毫无意义，可以没有，但是我希望，这能帮助我理解
-      echo "conda activate cling" | tee -a /etc/skel/.zshrc "${HOME}/.zshrc"
+      echo "conda activate ${CONDA_PY_ENV}" | tee -a /etc/skel/.zshrc "${HOME}/.zshrc"
     fi
     ;;
   *)
@@ -114,8 +117,8 @@ for pkg in "${packages[@]}"; do
 done
 
 # 根据 Python 版本安装 pip 和 tensorflow
-python -m pip install --no-cache-dir -v --upgrade pip --break-system-packages
-python -m pip install --no-cache-dir -v tensorflow --break-system-packages
+python -m pip install --no-cache-dir -v --upgrade pip --break-system-packages -i ${PIP_CHANNELS}
+python -m pip install --no-cache-dir -v tensorflow --break-system-packages -i ${PIP_CHANNELS}
 
 log_info "Jupyter setup is complete."
 jupyter --version

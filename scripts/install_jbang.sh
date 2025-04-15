@@ -18,13 +18,17 @@ log_info "Setting up JBang and configuring Jupyter Java Kernel..."
 # 但是我不确定是不是所有的 linux 都会 lib 缺失，先注释吧
 #export LD_LIBRARY_PATH=${MINIFORGE_DIR}/lib:${LD_LIBRARY_PATH}
 
+# 指定 python 版本
+#export PY_VERSION=3.12.10
+#export CONDA_PY_ENV=py${PY_VERSION}
+
 # jbang 环境
 # export PATH="${HOME}/.jbang/bin:${PATH}"
 
 # 明确激活cling，确保非交互式环境变量生效，规避 ADDR2LINE: unbound variable
 set +u
 # 激活cling
-source activate cling
+source activate ${CONDA_PY_ENV}
 set -u
 
 curl -Ls https://sh.jbang.dev | bash -s - app setup

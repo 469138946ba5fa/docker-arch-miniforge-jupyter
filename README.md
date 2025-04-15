@@ -369,7 +369,7 @@ if [[ -f "/tmp/${TARGET_FILE}" ]]; then
   echo "Downloading SHA256 file..."
   curl -L -C - --retry 3 --retry-delay 5 --progress-bar -o "/tmp/${SHA256_FILE}" "${URI_SHA256}"
   # 提取校验码
-  CHECKSUM=$(cat "/tmp/${SHA256_FILE}" | jq -r --arg filename "${TARGET_FILE}" '.subject[] | select(.name == ${filename}) | .digest.sha256')
+  CHECKSUM=$(cat "/tmp/${SHA256_FILE}" | jq -r --arg filename "${TARGET_FILE}" '.subject[] | select(.name == $filename) | .digest.sha256')
   # 将校验码写入源文件
   echo "${CHECKSUM} *${TARGET_FILE}" > "/tmp/${SHA256_FILE}"
   echo "校验码 ${CHECKSUM} 已写入文件: /tmp/${SHA256_FILE}"
@@ -399,7 +399,7 @@ if [[ ! -f "/tmp/${TARGET_FILE}" ]]; then
   echo "Downloading SHA256 file..."
   curl -L --progress-bar -o "/tmp/${SHA256_FILE}" "${URI_SHA256}"
   # 提取校验码
-  CHECKSUM=$(cat "/tmp/${SHA256_FILE}" | jq -r --arg filename "${TARGET_FILE}" '.subject[] | select(.name == ${filename}) | .digest.sha256')
+  CHECKSUM=$(cat "/tmp/${SHA256_FILE}" | jq -r --arg filename "${TARGET_FILE}" '.subject[] | select(.name == $filename) | .digest.sha256')
   # 将校验码写入源文件
   echo "${CHECKSUM} *${TARGET_FILE}" > "/tmp/${SHA256_FILE}"
   echo "校验码 ${CHECKSUM} 已写入文件: /tmp/${SHA256_FILE}"

@@ -16,6 +16,10 @@ log_info "Initializing conda..."
 # 但是我不确定是不是所有的 linux 都会 lib 缺失，先注释吧
 #export LD_LIBRARY_PATH=${MINIFORGE_DIR}/lib:${LD_LIBRARY_PATH}
 
+# 指定 python 版本
+#export PY_VERSION=3.12.10
+#export CONDA_PY_ENV=py${PY_VERSION}
+
 # 配置 locale
 # export LANGUAGE=zh_CN.UTF-8
 # export LC_ALL=zh_CN.UTF-8
@@ -29,11 +33,11 @@ log_info "Initializing conda..."
 # export CLASSPATH=.:${JAVA_HOME}/lib
 # export PATH=${PATH}:${JAVA_HOME}/bin
 
-# 明确激活cling，确保非交互式环境变量生效，规避 ADDR2LINE: unbound variable
+# 明确激活 ${CONDA_PY_ENV}，确保非交互式环境变量生效，规避 ADDR2LINE: unbound variable
 set +u
-# 激活cling
-log_info "Activate cling env..."
-source activate cling
+# 激活${CONDA_PY_ENV}
+log_info "Activate ${CONDA_PY_ENV} env..."
+source activate ${CONDA_PY_ENV}
 set -u
 
 # 将日志输出重定向到日志文件

@@ -142,6 +142,10 @@ fi
 # 安装 Miniforge
 bash "/tmp/${TARGET_FILE}" -b -f -p ${MINIFORGE_DIR}
 
+# 将激活环境写入配置文件中，保留长期有效
+# 在 docker 非交互式容器中毫无意义，可以没有，但是我希望，这能帮助我理解
+echo ". ${MINIFORGE_DIR}/etc/profile.d/conda.sh" | tee -a /etc/environment "${HOME}/.profile" 
+
 # 获取当前 shell 名称
 CURRENT_SHELL=$(basename "${SHELL}")
 
@@ -154,7 +158,7 @@ case "${CURRENT_SHELL}" in
       # 固化 miniforge 环境
       # 在 docker 非交互式容器中毫无意义，可以没有，但是我希望，这能帮助我理解
       conda init bash
-      echo ". ${MINIFORGE_DIR}/etc/profile.d/conda.sh" | tee -a /etc/skel/.bashrc /etc/default/locale /etc/environment "${HOME}/.profile" "${HOME}/.bashrc"
+      echo ". ${MINIFORGE_DIR}/etc/profile.d/conda.sh" | tee -a /etc/skel/.bashrc "${HOME}/.bashrc"
     fi
     ;;
   zsh)
@@ -163,7 +167,7 @@ case "${CURRENT_SHELL}" in
       # 固化 miniforge 环境
       # 在 docker 非交互式容器中毫无意义，可以没有，但是我希望，这能帮助我理解
       conda init zsh
-      echo ". ${MINIFORGE_DIR}/etc/profile.d/conda.sh" | tee -a /etc/skel/.zshrc /etc/default/locale /etc/environment "${HOME}/.profile" "${HOME}/.zshrc"
+      echo ". ${MINIFORGE_DIR}/etc/profile.d/conda.sh" | tee -a /etc/skel/.zshrc "${HOME}/.zshrc"
     fi
     ;;
   *)

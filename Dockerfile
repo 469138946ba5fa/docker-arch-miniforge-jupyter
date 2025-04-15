@@ -7,6 +7,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG TZ='Asia/Shanghai'
 # install_miniforge.sh install_jupyter.sh 所需临时环境变量
 ARG CONDA_CHANNELS=defaults
+ARG PIP_CHANNELS='https://pypi.org/simple'
 ARG PY_VERSION=3.12.10
 # install_jdk.sh 所需临时环境变量
 ARG JDK_VERSION=25
@@ -25,9 +26,8 @@ ENV LANG=zh_CN.UTF-8 \
     LC_ALL=zh_CN.UTF-8 \
     LANGUAGE=zh_CN.UTF-8 \
     LC_CTYPE=zh_CN.UTF-8 \
-    MINIFORGE_DIR=/opt/Miniforge \
-    JAVA_HOME=${BUILD_HOME}/.jbang/currentjdk \
     CLASSPATH=.:${JAVA_HOME}/lib \
+    CONDA_PY_ENV=py${PY_VERSION} \
     PATH=${MINIFORGE_DIR}/bin:${BUILD_HOME}/.jbang/bin:${JAVA_HOME}/bin:${PATH}
 
 # 添加常用LABEL（根据需要修改）添加标题 版本 作者 代码仓库 镜像说明，方便优化
