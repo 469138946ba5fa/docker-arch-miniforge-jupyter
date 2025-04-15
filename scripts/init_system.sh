@@ -89,7 +89,6 @@ case "${CURRENT_SHELL}" in
       log_info "Initializing LANG|LC_ALL|LANGUAGE|LC_CTYPE for bash..."
       # 固化 LANG|LC_ALL|LANGUAGE|LC_CTYPE 环境
       # 在 docker 非交互式容器中毫无意义，可以没有，但是我希望，这能帮助我理解
-      conda init bash
       cat << '469138946ba5fa' | tee -a /etc/skel/.bashrc "${HOME}/.bashrc"
 LANG=zh_CN.UTF-8
 LC_ALL=zh_CN.UTF-8
@@ -103,7 +102,6 @@ LC_CTYPE=zh_CN.UTF-8
       log_info "Initializing LANG|LC_ALL|LANGUAGE|LC_CTYPE for zsh..."
       # 固化 LANG|LC_ALL|LANGUAGE|LC_CTYPE 环境
       # 在 docker 非交互式容器中毫无意义，可以没有，但是我希望，这能帮助我理解
-      conda init zsh
       cat << '469138946ba5fa' | tee -a /etc/skel/.zshrc "${HOME}/.zshrc"
 LANG=zh_CN.UTF-8
 LC_ALL=zh_CN.UTF-8
