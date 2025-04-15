@@ -435,7 +435,7 @@ docker buildx build 在项目目录下执行构建镜像具体流程命令 ：
 ```shell
 # docker proxy pull
 ## 配置 docker 代理，比如 http://192.168.255.253:7890
-mkdir -pv /etc/systemd/system/docker.service.d
+sudo mkdir -pv /etc/systemd/system/docker.service.d
 cat << '469138946ba5fa' | sudo tee /etc/systemd/system/docker.service.d/http-proxy.conf
 [Service]
 Environment="HTTP_PROXY=http://192.168.255.253:7890"
