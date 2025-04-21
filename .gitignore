@@ -9,5 +9,7 @@
 # 忽略 JetBrains 项目配置文件夹
 .idea/
 
-# 忽略项目忽略文件自身和项目属性文件.gitignore
+# 忽略项目忽略文件自身和项目属性文件
+.gitignore
+.gitattributes.gitignore
 .gitattributes
