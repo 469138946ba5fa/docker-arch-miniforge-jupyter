@@ -26,6 +26,7 @@ ENV LANG=zh_CN.UTF-8 \
     LC_ALL=zh_CN.UTF-8 \
     LANGUAGE=zh_CN.UTF-8 \
     LC_CTYPE=zh_CN.UTF-8 \
+    JAVA_HOME=${JAVA_HOME} \
     CLASSPATH=.:${JAVA_HOME}/lib \
     CONDA_PY_ENV=py${PY_VERSION} \
     PATH=${MINIFORGE_DIR}/bin:${BUILD_HOME}/.jbang/bin:${JAVA_HOME}/bin:${PATH}
