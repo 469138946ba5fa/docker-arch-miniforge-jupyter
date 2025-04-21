@@ -1,5 +1,5 @@
 services:
-  jupyter_service:
+  miniforge_jupyter_service:
     build:
       context: ${BUILD_CONTEXT}                   # 构建上下文路径，来自 .env
     entrypoint:                                   # ENTRYPOINT 配置，来自 .env
