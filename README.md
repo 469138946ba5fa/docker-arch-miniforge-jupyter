@@ -664,6 +664,8 @@ mkdir -pv  ${BUILDX_CACHE}-new
 [jupyterlab](https://jupyterlab.readthedocs.io/en/latest/#)  
 [miniforge](https://github.com/conda-forge/miniforge)  
 [xeus-cling](https://github.com/jupyter-xeus/xeus-cling)  
+[tensorflow](https://www.tensorflow.org/)  
+[wiki tensorflow](https://en.wikipedia.org/wiki/TensorFlow)  
 [jbang](https://www.jbang.dev/)  
 [openjdk](https://adoptium.net/)  
 
