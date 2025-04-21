@@ -11,5 +11,4 @@
 
 # 忽略项目忽略文件自身和项目属性文件
 .gitignore
-.gitattributes.gitignore
 .gitattributes
