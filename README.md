@@ -449,7 +449,7 @@ sudo systemctl show --property=Environment docker
 
 # docker login & config
 ## 使用 github 具有上传下载镜像权限 [write:packages(read:packages)] 的 token 登陆 github 并预配置用户和目录参数
-echo '请输入具有上传下载镜像权限 [write:packages(read:packages)] 的 github token :' ; read -sr GITHUB_TOKEN
+echo '请输入具有上传下载镜像权限 [write:packages(read:packages)] 的 github token (不会显示输入内容):' ; read -sr GITHUB_TOKEN
 echo '请输入 github 用户名(为空则默认是 469138946ba5fa ):' ; read -r USERNAME
 echo '请输入你的 github 镜像存储源(为空则默认是 ghcr.io ):' ; read -r DOCKER_DOMAIN
 echo '请输入 docker 项目存放的父目录(为空则默认目录 /media/psf/KingStonSSD1T/docker-workspace ):' ; read -r CUSTOM_DIR
