@@ -2,6 +2,8 @@
 miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器 
 本项目通过 Docker 构建了一个多内核 Jupyter 环境，集成了 Python、C++ 和 Java（jdk 25）的内核。项目基于 Miniforge 构建，并通过自动化脚本完成各项配置（如 Jupyter 自动配置、默认密码、终端、主题等）。
 
+![1](images/1.png)
+
 ![Watchers](https://img.shields.io/github/watchers/469138946ba5fa/docker-arch-miniforge-jupyter) ![Stars](https://img.shields.io/github/stars/469138946ba5fa/docker-arch-miniforge-jupyter) ![Forks](https://img.shields.io/github/forks/469138946ba5fa/docker-arch-miniforge-jupyter) ![Vistors](https://visitor-badge.laobi.icu/badge?page_id=469138946ba5fa.docker-arch-miniforge-jupyter) ![LICENSE](https://img.shields.io/badge/license-CC%20BY--SA%204.0-green.svg)
 <a href="https://star-history.com/#469138946ba5fa/docker-arch-miniforge-jupyter&Date">
   <picture>
