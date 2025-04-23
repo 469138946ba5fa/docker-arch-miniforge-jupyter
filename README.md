@@ -1,6 +1,6 @@
 # docker-arch-miniforge-jupyter
 miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器 
-本项目通过 Docker 构建了一个多内核 Jupyter 环境，集成了 Python、C++（支持 C++11，手动配置也许可以扩展至 C++14、C++17、甚至 C++20 不过我只能使用 C++11 原因未知）以及 Java（jdk 25）的内核。项目基于 Miniforge 构建，并通过自动化脚本完成各项配置（如 Jupyter 自动配置、默认密码、终端、主题等）。
+本项目通过 Docker 构建了一个多内核 Jupyter 环境，集成了 Python、C++ 和 Java（jdk 25）的内核。项目基于 Miniforge 构建，并通过自动化脚本完成各项配置（如 Jupyter 自动配置、默认密码、终端、主题等）。
 
 ![Watchers](https://img.shields.io/github/watchers/469138946ba5fa/docker-arch-miniforge-jupyter) ![Stars](https://img.shields.io/github/stars/469138946ba5fa/docker-arch-miniforge-jupyter) ![Forks](https://img.shields.io/github/forks/469138946ba5fa/docker-arch-miniforge-jupyter) ![Vistors](https://visitor-badge.laobi.icu/badge?page_id=469138946ba5fa.docker-arch-miniforge-jupyter) ![LICENSE](https://img.shields.io/badge/license-CC%20BY--SA%204.0-green.svg)
 <a href="https://star-history.com/#469138946ba5fa/docker-arch-miniforge-jupyter&Date">
@@ -38,7 +38,7 @@ miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器
 
 - **多语言支持**  
   - Python 内核  
-  - C++ 内核：默认提供 C++11 内核，手动修改配置后也许可以扩展支持 C++14、C++17，甚至 C++20。  
+  - C++ 内核：默认提供 C++11、C++14、C++17 内核，手动修改配置后可以扩展支持 C++20。
   - Java 内核：通过 jbang 与 Java（jdk 25）部署相应内核。
 
 - **自动化配置**  
@@ -100,6 +100,14 @@ docker-compose restart
   System.out.println("Hello, World! (Java)");
   ```
 
+在 Jupyter Notebook 中，新建 Notebook 选择C++内核时。频繁测试代码，建议经常清理内核以避免变量冲突报错
+如果多次执行同一个cell会报错，因为重复执行意味着变量名重复定义，Jupyter会存储那些变量，这就是为什么不同作用的代码最好放入不同的 cell 按顺序执行
+比如头文件引用放入一个 cell 仅执行一次即可，创建变量代码放入一个 cell 仅执行一次即可，代码逻辑执行放入一个 cell 可以多次执行
+此外，使用独特变量名称也是一个好习惯。
+如果报错了，清理之前代码定义的变量可以解决这个问题：
+  在 Jupyter Notebook 中，点击 "内核" -> "重新启动并清除输出"。
+  重新运行需要的代码。
+
 - **C++11 示例**
 
   ```cpp
@@ -115,9 +123,8 @@ docker-compose restart
   std::cout << "C++11: Sum of squares is " << sumOfSquares << std::endl;
   ```
 
-- **C++14/C++17 测试（手动复制 C++11 内核并修改 kernel.json 后使用，失败了不知道怎么用）☹️**
+- **C++14 示例（失败了☹️）**
 
-  C++14 示例，失败了☹️：
   ```cpp
   #include <iostream>
   auto add = [](auto a, auto b) {
@@ -126,7 +133,7 @@ docker-compose restart
   std::cout << "C++14: 10 + 20 = " << add(10, 20) << std::endl;
   ```
 
-  C++17 示例，失败了☹️：
+- **C++17 示例（失败了☹️）**
   ```cpp
   #include <iostream>
   #include <tuple>
@@ -136,7 +143,7 @@ docker-compose restart
   std::cout << "C++17: " << num << ", " << pi << ", " << greeting << std::endl;
   ```
 
-- **C++20 示例（可选，在内核文件中配置 `-std=c++20`，也失败了）☹️**
+- **C++20 示例（手动复制 C++11 内核并修改 kernel.json 后使用，失败了☹️）**
 
   ```cpp
   #include <iostream>
@@ -156,7 +163,7 @@ docker-compose restart
 - github 仓库 ghcr.io 推送一直不显示 docker 镜像标签信息☹️
 - github 仓库 ghcr.io 推送 --output 导出器 type=oci-mediatypes=false 关闭OCI索引，然而失败了☹️
 - amd64 架构镜像 C++17 崩溃，arm64 架构镜像 C++14/17 崩溃  
-- 如遇 C++14/C++17/C++20 内核加载时出现标准库或 ABI 不匹配错误，请检查容器中安装的 GCC/libstdc++ 版本与 xeus-cling 预编译包是否一致。可考虑在 kernel.json 中添加额外编译参数（例如 `-D_GLIBCXX_USE_CXX11_ABI=1`）或调整基础镜像，失败的思路☹️。
+- 如遇 C++14/C++17/C++20 内核加载时出现标准库或 ABI 不匹配错误，请检查容器中安装的 GCC/libstdc++ 版本与 xeus-cling 预编译包是否一致。可考虑在 kernel.json 中添加额外编译参数（例如 `-D_GLIBCXX_USE_CXX11_ABI=1`）或调整基础镜像，这是失败的思路☹️。
 - 若 Jupyter 配置（密码、默认终端或主题）未生效，请检查容器启动日志中是否正确生成 `~/.jupyter` 下的配置文件。
 - 容量太大，个人学习使用还可以，共享出来也少有人能用上，构建出这么大的镜像不如安装到本机
 

@@ -76,7 +76,14 @@ if [[ -z "${JUPYTER_PASSWORD:-}" ]]; then
 fi
 
 # 生成密码哈希（新版Jupyter使用 Notebook.auth 模块产生密码哈希）
-JUPYTER_PASSWORD_HASH=$(python -c "from notebook.auth import passwd; print(passwd('${JUPYTER_PASSWORD}'))")
+# JUPYTER_PASSWORD_HASH=$(python -c "from notebook.auth import passwd; print(passwd('${JUPYTER_PASSWORD}'))")
+JUPYTER_PASSWORD_HASH=$(python -c "
+try:
+    from jupyter_server.auth.security import passwd
+except ImportError:
+    from notebook.auth import passwd
+print(passwd('${JUPYTER_PASSWORD}'))
+")
 
 log_info "Appending custom configuration for default shell and JUPYTER_PASSWORD to Jupyter server config..."
 

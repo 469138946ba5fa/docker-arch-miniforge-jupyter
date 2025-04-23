@@ -10,7 +10,7 @@ on:
 # 自定义环境变量，有风险危险调用，有什么私密变量请不要定义在这里
 env:
   REGISTRY: ghcr.io
-  IMAGE: ${{ github.actor }}/jupyter-optimized
+  IMAGE: ${{ github.actor }}/docker-arch-miniforge-jupyter
 
 jobs:
   build:
