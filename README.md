@@ -188,7 +188,7 @@ docker-compose restart
 稍微说一下吧，点到为止  
 比如我的机器是 Ubuntu 24.04 LTS (GNU/Linux 6.8.0-57-generic aarch64)
 
-docker 部署过程如下：
+  - **docker 部署过程如下：**
 
 ```shell
 # 系统可以使用官方一键安装脚本 https://github.com/docker/docker-install
@@ -218,7 +218,7 @@ sudo systemctl start containerd.service
 docker run --rm hello-world:latest
 ```
 
-compose 部署更新过程如下：
+  - **compose 部署更新过程如下：**
 
 ```shell
 # GitHub 项目 URI
@@ -328,7 +328,7 @@ docker-compose version
 docker compose version
 ```
 
-buildx 部署更新过程如下：
+  - **buildx 部署更新过程如下：**
 
 ```shell
 # GitHub 项目 URI
@@ -448,7 +448,7 @@ docker-buildx version
 docker buildx version
 ```
 
-docker buildx build 在项目目录下执行构建镜像具体流程命令 ：
+  - **docker buildx build 在项目目录下执行构建镜像具体流程命令 ：**
 
 ```shell
 # docker proxy pull
