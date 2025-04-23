@@ -622,6 +622,15 @@ docker manifest inspect ${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest
 # 启用调试模式后，命令会输出更多的详细信息，包括 Docker 连接的网络请求、API 调用等
 docker --debug manifest inspect ${DOCKER_DOMAIN}/${USERNAME}/${REPO}
 
+# delete buildx cache dir
+## 删除 docker buildx 所使用的大存储缓存目录，你也可以留着
+rm -frv ${BUILDX_CACHE}
+
+# create new buildx cache dir
+## 使用  docker buildx 新的缓存替换旧缓存
+mv -fv ${BUILDX_CACHE}-new ${BUILDX_CACHE}
+mkdir -pv  ${BUILDX_CACHE}-new
+
 # docker build clean
 ## 清理所有停止的容器
 #docker container prune
@@ -648,15 +657,6 @@ docker-buildx ls
 docker-buildx stop ${REPO}
 docker-buildx rm -f ${REPO}
 docker-buildx ls
-
-# delete buildx cache dir
-## 删除 docker buildx 所使用的大存储缓存目录，你也可以留着
-rm -frv ${BUILDX_CACHE}
-
-# create new buildx cache dir
-## 使用  docker buildx 新的缓存替换旧缓存
-mv -fv ${BUILDX_CACHE}-new ${BUILDX_CACHE}
-mkdir -pv  ${BUILDX_CACHE}-new
 ```
 
 ## 起因与内心：
