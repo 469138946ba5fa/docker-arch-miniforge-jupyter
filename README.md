@@ -26,6 +26,7 @@ miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器
 ├── LICENSE                    # 许可协议文件
 ├── README.md                  # 本项目说明文档
 └── scripts                    # 脚本目录，包含各项自动化安装和启动脚本
+    ├── analyze_size.sh        # 日志记录点，虽跳出三界外不在五行中，但却在道之内，为精简优化镜像提供参考
     ├── clean.sh               # 清理构建产物或停止容器的脚本
     ├── common.sh              # 通用日志、函数等辅助脚本
     ├── init_system.sh         # 系统初始化脚本（例如配置 locale、环境变量等）
@@ -524,34 +525,37 @@ docker-buildx inspect --bootstrap
 #  --no-cache 选项来避免使用过多的缓存，不要与 --cache-from 和 --cache-to 合用
 #  --cache-from 从 ${BUILDX_CACHE} 目录中加载缓存数据，加速构建。
 #  --cache-to 将新生成的缓存数据写入到 ${BUILDX_CACHE}-new 目录中。
-#  --label 添加镜像标签应该和 Dockerfile 中的 LABEL 等效，但是推送一直不显示 docker 镜像标签信息☹️
+#  --label 添加单镜像标签应该和 Dockerfile 中的 LABEL 等效
 #  --load 表示将构建完成的镜像加载到 Docker 本地镜像库中（对于跨平台构建，注意在某些情况下可能只能加载当前体系结构的镜像）。
 #  --push 表示将构建完成的镜像推送到 Docker 远端镜像库中 
 #  --output 导出器以下是type参数信息
 #    type=image 导出类型为镜像
-#    name=ghcr.io/469138946ba5fa/docker-arch-miniforge-jupyter:latest 镜像名
+#    name=ghcr.io/469138946ba5fa/docker-arch-test:latest 镜像名
 #    compression=zstd 压缩类型 zstd 也支持 gzip 和 estargz
 #    compression-level=22 设置 zstd 压缩级别为 22 ，gzip 和 estargz 的范围是 0-9 ， zstd 的范围是 0-22
 #    force-compression=true 强制重压缩
+#  最近发现对于多架构镜像需要额外在 --output 中配置多架构标签属性 --label 仅适用于单架构情况 https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#adding-a-description-to-multi-arch-images
+#  --output 
+#    annotation-index.org.opencontainers.image.description='' 多架构镜像注释标签
+#    annotation-index.org.opencontainers.image.title='' 多架构镜像标题标签
+#    annotation-index.org.opencontainers.image.version='' 多架构镜像版本标签
+#    annotation-index.org.opencontainers.image.authors='' 多架构镜像作者标签
+#    annotation-index.org.opencontainers.image.source='' 多架构镜像关联仓库标签
+#    annotation-index.org.opencontainers.image.licenses='' 多架构镜像协议标签
 #  最近发现云端镜像仓库有 unknown/unknown 未识别架构的问题，如下方案可以规避云端仓库 https://github.com/docker/buildx/issues/1964#issuecomment-1644634461
-#  --output 导出器 type=oci-mediatypes=false 关闭OCI索引，然而失败了☹️
-#  --provenance=false 设置为不生成来源信息，但禁用 provenance 信息，意味着你失去了有关构建过程的详细记录和签名。这对追踪镜像的安全性和来源可能会有一些影响。
+#  --output 导出器 type=oci-mediatypes=false 关闭OCI索引，然而失败了☹️，unknown/unknown 显示问题存在
+#  --provenance=false 设置为不生成来源信息，但禁用 provenance 信息，意味着你失去了有关构建过程的详细记录和签名。这对追踪镜像的安全性和来源可能会有一些影响，可以解决 unknown/unknown 显示问题
 #  参考 https://docs.docker.com/build/building/variables/#buildx_no_default_attestations
-#  export BUILDX_NO_DEFAULT_ATTESTATIONS=1 添加环境变量禁用来源证明应该和 --provenance=false 等效
+#  export BUILDX_NO_DEFAULT_ATTESTATIONS=1 添加环境变量禁用来源证明应该和 --provenance=false 等效，也可以解决 unknown/unknown 显示问题
+#  综上，我觉得 unknown/unknown 也可以接受，就这样吧
 
 # buildx build load
-## 单架构本地存储，比如 linux/arm64/v8 ，压缩，去除oci索引
-export BUILDX_NO_DEFAULT_ATTESTATIONS=1
-docker-buildx build --platform linux/arm64/v8 \
+## 单架构本地存储，比如 linux/arm64/v8 ，压缩生成镜像
+docker buildx build \
+  --platform linux/arm64/v8 \
   --cache-from type=local,src=${BUILDX_CACHE} \
   --cache-to type=local,dest=${BUILDX_CACHE}-new,mode=max \
-  --label "org.opencontainers.image.description=miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器." \
-  --label "org.opencontainers.image.title=Miniforge Jupyter" \
-  --label "org.opencontainers.image.version=1.0.0" \
-  --label "org.opencontainers.image.authors=469138946ba5fa <af5ab649831964@gmail.com>" \
-  --label "org.opencontainers.image.source=https://github.com/469138946ba5fa/docker-arch-miniforge-jupyter" \
-  --label "org.opencontainers.image.licenses=MIT" \
-  --output type=image,name=${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest,compression=zstd,compression-level=22,force-compression=true,oci-mediatypes=false \
+  --output type=image,name=${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest,compression=zstd,compression-level=22,force-compression=true \
   --tag ${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest \
   --load .
 
@@ -568,59 +572,61 @@ docker-compose stats
 # buildx build push
 ## 多架构上传仓库，比如 linux/arm64/v8,linux/amd64，去除oci索引，防止 unknown/unknown
 ## 正常构建镜像会很大，但是时间很短，上传会浪费大量带宽
-export BUILDX_NO_DEFAULT_ATTESTATIONS=1
+# buildx build push
+## 多架构上传仓库，比如 linux/arm64/v8,linux/amd64
+## 正常构建镜像会很大，但是时间很短，上传会浪费大量带宽
 docker buildx build \
   --platform linux/arm64/v8,linux/amd64 \
-  --label "org.opencontainers.image.description=miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器." \
-  --label "org.opencontainers.image.title=Miniforge Jupyter" \
-  --label "org.opencontainers.image.version=1.0.0" \
-  --label "org.opencontainers.image.authors=469138946ba5fa <af5ab649831964@gmail.com>" \
-  --label "org.opencontainers.image.source=https://github.com/469138946ba5fa/docker-arch-miniforge-jupyter" \
-  --label "org.opencontainers.image.licenses=MIT" \
   --cache-from type=local,src=${BUILDX_CACHE} \
   --cache-to type=local,dest=${BUILDX_CACHE}-new,mode=max \
-  --output type=image,name=${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest,oci-mediatypes=false \
+  --output type=image,name=${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest,\
+annotation-index.org.opencontainers.image.description='miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器，支持 amd64 和 arm64/v8 架构.',\
+annotation-index.org.opencontainers.image.title='Miniforge Jupyter',\
+annotation-index.org.opencontainers.image.version='1.0.0',\
+annotation-index.org.opencontainers.image.authors='469138946ba5fa <af5ab649831964@gmail.com>',\
+annotation-index.org.opencontainers.image.source='https://github.com/469138946ba5fa/docker-arch-miniforge-jupyter',\
+annotation-index.org.opencontainers.image.licenses='MIT' \
   --push .
 
-## 或者多架构上传仓库，比如 linux/arm64/v8,linux/amd64，压缩并去除oci索引，防止 unknown/unknown
+## 或者多架构上传仓库，比如 linux/arm64/v8,linux/amd64，压缩
 ## 但压缩会意味着浪费更多的时间，但是也许会节省带宽，然而我并不清楚压缩和正常构建之间的关系
-export BUILDX_NO_DEFAULT_ATTESTATIONS=1
 docker buildx build \
   --platform linux/arm64/v8,linux/amd64 \
-  --label "org.opencontainers.image.description=miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器." \
-  --label "org.opencontainers.image.title=Miniforge Jupyter" \
-  --label "org.opencontainers.image.version=1.0.0" \
-  --label "org.opencontainers.image.authors=469138946ba5fa <af5ab649831964@gmail.com>" \
-  --label "org.opencontainers.image.source=https://github.com/469138946ba5fa/docker-arch-miniforge-jupyter" \
-  --label "org.opencontainers.image.licenses=MIT" \
   --cache-from type=local,src=${BUILDX_CACHE} \
   --cache-to type=local,dest=${BUILDX_CACHE}-new,mode=max \
-  --output type=image,name=${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest,compression=zstd,compression-level=22,force-compression=true,oci-mediatypes=false \
+  --output type=image,name=${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest,compression=zstd,compression-level=22,force-compression=true,\
+annotation-index.org.opencontainers.image.description='miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器，支持 amd64 和 arm64/v8 架构.',\
+annotation-index.org.opencontainers.image.title='Miniforge Jupyter',\
+annotation-index.org.opencontainers.image.version='1.0.0',\
+annotation-index.org.opencontainers.image.authors='469138946ba5fa <af5ab649831964@gmail.com>',\
+annotation-index.org.opencontainers.image.source='https://github.com/469138946ba5fa/docker-arch-miniforge-jupyter',\
+annotation-index.org.opencontainers.image.licenses='MIT' \
   --push .
 
 ## 或者多架构上传仓库，比如 linux/arm64/v8,linux/amd64，压缩，不生成镜像来源，防止 unknown/unknown
-## 禁用 provenance 信息，意味着你失去了有关构建过程的详细记录和签名。这对追踪镜像的安全性和来源可能会有一些影响。
-export BUILDX_NO_DEFAULT_ATTESTATIONS=1
+## 使用 export BUILDX_NO_DEFAULT_ATTESTATIONS=1 或 --provenance=false 禁用来源信息，意味着你失去了有关构建过程的详细记录和签名。这对追踪镜像的安全性和来源可能会有一些影响。
+#export BUILDX_NO_DEFAULT_ATTESTATIONS=1
 docker buildx build \
   --platform linux/arm64/v8,linux/amd64 \
-  --label "org.opencontainers.image.description=miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器." \
-  --label "org.opencontainers.image.title=Miniforge Jupyter" \
-  --label "org.opencontainers.image.version=1.0.0" \
-  --label "org.opencontainers.image.authors=469138946ba5fa <af5ab649831964@gmail.com>" \
-  --label "org.opencontainers.image.source=https://github.com/469138946ba5fa/docker-arch-miniforge-jupyter" \
-  --label "org.opencontainers.image.licenses=MIT" \
   --cache-from type=local,src=${BUILDX_CACHE} \
   --cache-to type=local,dest=${BUILDX_CACHE}-new,mode=max \
-  --output type=image,name=${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest,compression=zstd,compression-level=22,force-compression=true \
-  --provenance=false
+  --output type=image,name=${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest,compression=zstd,compression-level=22,force-compression=true,\
+annotation-index.org.opencontainers.image.description='miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器，支持 amd64 和 arm64/v8 架构.',\
+annotation-index.org.opencontainers.image.title='Miniforge Jupyter',\
+annotation-index.org.opencontainers.image.version='1.0.0',\
+annotation-index.org.opencontainers.image.authors='469138946ba5fa <af5ab649831964@gmail.com>',\
+annotation-index.org.opencontainers.image.source='https://github.com/469138946ba5fa/docker-arch-miniforge-jupyter',\
+annotation-index.org.opencontainers.image.licenses='MIT' \
+  --provenance=false \
   --push .
+#unset BUILDX_NO_DEFAULT_ATTESTATIONS
 
 # 查看 Docker 镜像元数据信息
 docker inspect ${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest
 # 查看 Docker 镜像清单（Manifest）。JSON 格式 Docker 镜像清单包含了有关镜像的元数据，包括层（layers）、架构（architecture）、操作系统（OS）、标签（tags）等信息
 docker manifest inspect ${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest
 # 启用调试模式后，命令会输出更多的详细信息，包括 Docker 连接的网络请求、API 调用等
-docker --debug manifest inspect ${DOCKER_DOMAIN}/${USERNAME}/${REPO}
+docker --debug manifest inspect ${DOCKER_DOMAIN}/${USERNAME}/${REPO}:latest
 
 # delete buildx cache dir
 ## 删除 docker buildx 所使用的大存储缓存目录，你也可以留着
@@ -631,22 +637,21 @@ rm -frv ${BUILDX_CACHE}
 mv -fv ${BUILDX_CACHE}-new ${BUILDX_CACHE}
 mkdir -pv  ${BUILDX_CACHE}-new
 
-# docker build clean
-## 清理所有停止的容器
-#docker container prune
-## 清理未使用的卷
-#docker volume prune
 ## 清理 buildx 构建缓存。以及清理构建新镜像所产生的 <none> 标签老镜像
 docker builder prune -af
 docker rmi $(docker images -qaf dangling=true)
-#docker image prune -a
-## 清理未使用的镜像
-#docker image prune -a
-## 清理所有不需要的数据: 如果想要彻底清理所有未使用的镜像、容器、网络和卷，可以使用
-#docker system prune --all --volumes
 
-## 清理所有未使用的镜像、容器、网络、构建缓存和卷。
-#docker system prune --volumes
+# docker build clean
+## 清理所有停止的容器
+#docker container prune -f
+## 清理未使用的镜像
+#docker image prune -af
+## 清理不使用的网络
+#docker network prune -f
+## 清理不使用的卷
+#docker volume prune -af
+## 清理所有不需要的数据: 如果想要彻底清理所有未使用的镜像、容器、网络和卷，可以使用
+#docker system prune --all --volumes -af
 
 # buildx remove other node
 ## 清理 buildx 不使用的节点，你也可以留着
@@ -657,6 +662,183 @@ docker-buildx ls
 docker-buildx stop ${REPO}
 docker-buildx rm -f ${REPO}
 docker-buildx ls
+```
+
+## 关于 analyze_size.sh 日志记录点
+虽跳出三界外不在五行中，但却在道之内，为精简优化镜像提供参考
+
+- **可以将脚本插入在 Dockerfile RUN 的各处位置**
+- **比如本项目需要检查安装前、后与清理后镜像大小对比变化记录，需要提前插入日志记录**
+- **安装前 `analyze_size.sh before-install` **
+- **安装后 `analyze_size.sh after-install` **
+- **清理后 `analyze_size.sh after-clean` **
+```plaintext
+RUN cd /usr/local/bin/ && \
+    chmod -v a+x *.sh && \
+    analyze_size.sh before-install && \
+    init_system.sh && \
+    install_miniforge.sh && \
+    install_jupyter.sh && \
+    install_jbang.sh && \
+    install_jdk.sh && \
+    analyze_size.sh after-install && \
+    clean.sh && \
+    rm -fv init_system.sh install_miniforge.sh install_jupyter.sh install_jbang.sh install_jdk.sh clean.sh && \
+    analyze_size.sh after-clean
+```
+
+- **analyze_size.sh 检查安装前、后与清理后的镜像大小记录变化，构建镜像后进入容器可以执行如下命令获取方寸之间大小之变化**
+```bash
+# 安装前后对比大小变化
+analyze_size.sh after-install before-install
+# 安装后与清理后对比大小变化
+analyze_size.sh after-clean after-install
+```
+
+- **analyze_size.sh 检查结果，得到的日志结果如下**
+- **总结：似乎镜像无法优化了，已到绝处，无法逢生，在绝对的力量面前任何优化手段都毫无意义😮‍💨**
+```plaintext
+(py3.12.10) root@8ef4101d5648:/notebook# analyze_size.sh after-install before-install
+[信息] 快照 after-install 已存在，跳过采集。如需更新请使用 --force 参数。
+=== [after-install] 镜像体积快照 2025-04-24 15:37:07 ===
+
+/opt/jdk-25+9	297MB
+/root/.bashrc	3KB
+/root/.cache	1MB
+/root/.gitconfig	38b
+/root/.ipython	0b
+/root/.jbang	203MB
+/root/.jupyter	32b
+/root/.local	1KB
+/root/.m2	2MB
+/root/.profile	513b
+/root/.pyenv	3GB
+/root/.ssh	0b
+/usr/local/bin	2GB
+/usr/local/etc	0b
+/usr/local/games	0b
+/usr/local/include	46MB
+/usr/local/lib	866MB
+/usr/local/libexec	23KB
+/usr/local/man	9b
+/usr/local/sbin	0b
+/usr/local/share	155KB
+/usr/local/src	4GB
+/var/cache/adduser	0b
+/var/cache/apt	0b
+/var/cache/debconf	2MB
+/var/cache/ldconfig	11KB
+/var/cache/private	0b
+/var/lib/apt/extended_states	10KB
+/var/lib/apt/lists	35MB
+/var/lib/apt/mirrors	0b
+/var/lib/apt/periodic	0b
+
+🔍 [对比] before-install ➜ after-install 体积变化:
+
+/opt/jdk-25+9       	297MB ->(+297MB)
+/root/.bashrc       	3KB ->(+381b)
+/root/.cache        	1MB ->(+1MB)
+/root/.gitconfig    	38b ->(+38b)
+/root/.ipython      	0b ->(0b)
+/root/.jbang        	203MB ->(+203MB)
+/root/.jupyter      	32b ->(+32b)
+/root/.local        	1KB ->(+1KB)
+/root/.m2           	2MB ->(+2MB)
+/root/.profile      	513b ->(+381b)
+/root/.pyenv        	3GB ->(+3GB)
+/root/.ssh          	0b ->(0b)
+/usr/local/bin      	2GB ->(+2GB)
+/usr/local/etc      	0b ->(0b)
+/usr/local/games    	0b ->(0b)
+/usr/local/include  	46MB ->(+46MB)
+/usr/local/lib      	866MB ->(+866MB)
+/usr/local/libexec  	23KB ->(+23KB)
+/usr/local/man      	9b ->(0b)
+/usr/local/sbin     	0b ->(0b)
+/usr/local/share    	155KB ->(+155KB)
+/usr/local/src      	4GB ->(0b)
+/var/cache/adduser  	0b ->(0b)
+/var/cache/apt      	0b ->(0b)
+/var/cache/debconf  	2MB ->(+1MB)
+/var/cache/ldconfig 	11KB ->(+7KB)
+/var/cache/private  	0b ->(0b)
+/var/lib/apt/extended_states	10KB ->(+10KB)
+/var/lib/apt/lists  	35MB ->(+35MB)
+/var/lib/apt/mirrors	0b ->(0b)
+/var/lib/apt/periodic	0b ->(0b)
+```
+
+```plaintext
+(py3.12.10) root@8ef4101d5648:/notebook# analyze_size.sh after-clean after-install
+[信息] 快照 after-clean 已存在，跳过采集。如需更新请使用 --force 参数。
+=== [after-clean] 镜像体积快照 2025-04-24 15:38:16 ===
+
+/opt/jdk-25+9	297MB
+/root/.bashrc	3KB
+/root/.cache	0b
+/root/.gitconfig	38b
+/root/.ipython	0b
+/root/.jbang	203MB
+/root/.jupyter	32b
+/root/.local	1KB
+/root/.m2	2MB
+/root/.profile	513b
+/root/.pyenv	3GB
+/root/.ssh	0b
+/usr/local/bin	2GB
+/usr/local/etc	0b
+/usr/local/games	0b
+/usr/local/include	46MB
+/usr/local/lib	866MB
+/usr/local/libexec	23KB
+/usr/local/man	9b
+/usr/local/sbin	0b
+/usr/local/share	155KB
+/usr/local/src	0b
+/var/cache/adduser	0b
+/var/cache/apt	0b
+/var/cache/debconf	2MB
+/var/cache/ldconfig	11KB
+/var/cache/private	0b
+/var/lib/apt/extended_states	10KB
+/var/lib/apt/lists	0b
+/var/lib/apt/mirrors	0b
+/var/lib/apt/periodic	0b
+
+🔍 [对比] after-install ➜ after-clean 体积变化:
+
+/opt/jdk-25+9       	297MB ->(0b)
+/root/.bashrc       	3KB ->(0b)
+/root/.cache        	0b ->(-1MB)
+/root/.gitconfig    	38b ->(0b)
+/root/.ipython      	0b ->(0b)
+/root/.jbang        	203MB ->(0b)
+/root/.jupyter      	32b ->(0b)
+/root/.local        	1KB ->(0b)
+/root/.m2           	2MB ->(0b)
+/root/.profile      	513b ->(0b)
+/root/.pyenv        	3GB ->(0b)
+/root/.ssh          	0b ->(0b)
+/usr/local/bin      	2GB ->(-30KB)
+/usr/local/etc      	0b ->(0b)
+/usr/local/games    	0b ->(0b)
+/usr/local/include  	46MB ->(0b)
+/usr/local/lib      	866MB ->(0b)
+/usr/local/libexec  	23KB ->(0b)
+/usr/local/man      	9b ->(0b)
+/usr/local/sbin     	0b ->(0b)
+/usr/local/share    	155KB ->(0b)
+/usr/local/src      	0b ->(-4GB)
+/var/cache/adduser  	0b ->(0b)
+/var/cache/apt      	0b ->(0b)
+/var/cache/debconf  	2MB ->(0b)
+/var/cache/ldconfig 	11KB ->(0b)
+/var/cache/private  	0b ->(0b)
+/var/lib/apt/extended_states	10KB ->(0b)
+/var/lib/apt/lists  	0b ->(-35MB)
+/var/lib/apt/mirrors	0b ->(0b)
+/var/lib/apt/periodic	0b ->(0b)
 ```
 
 ## 起因与内心：
@@ -682,6 +864,9 @@ docker-buildx ls
 [github docker buildx](https://github.com/docker/buildx)  
 [github docker compose](https://github.com/docker/compose)  
 [docker proxy pull](https://docs.docker.com/engine/daemon/proxy/)  
+[adding-a-description-to-multi-arch-images](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#adding-a-description-to-multi-arch-images)  
+[oci unknown/unknown](https://github.com/docker/buildx/issues/1964#issuecomment-1644634461)  
+[buildx_no_default_attestations](https://docs.docker.com/build/building/variables/#buildx_no_default_attestations)  
 [jupyterlab](https://jupyterlab.readthedocs.io/en/latest/#)  
 [miniforge](https://github.com/conda-forge/miniforge)  
 [xeus-cling](https://github.com/jupyter-xeus/xeus-cling)  

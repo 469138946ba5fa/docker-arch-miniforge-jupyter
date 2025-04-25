@@ -50,15 +50,22 @@ COPY scripts/ /usr/local/bin/
 # 移除残留脚本 init_system.sh install_miniforge.sh install_jupyter.sh install_jbang.sh install_jdk.sh clean.sh
 # 保留日志脚本 common.sh
 # 启动脚本 start_jupyter.sh
+# analyze_size.sh 检查安装前、后与清理后的镜像大小记录变化，不过镜像似乎无法优化了，😮‍💨
+# 总结：似乎镜像无法优化了，已到绝处，无法逢生，在绝对的力量面前任何优化手段都毫无意义😮‍💨
+# analyze_size.sh after-install before-install
+# analyze_size.sh after-clean after-install
 RUN cd /usr/local/bin/ && \
     chmod -v a+x *.sh && \
+    analyze_size.sh before-install && \
     init_system.sh && \
     install_miniforge.sh && \
     install_jupyter.sh && \
     install_jbang.sh && \
     install_jdk.sh && \
+    analyze_size.sh after-install && \
     clean.sh && \
-    rm -fv init_system.sh install_miniforge.sh install_jupyter.sh install_jbang.sh install_jdk.sh clean.sh
+    rm -fv init_system.sh install_miniforge.sh install_jupyter.sh install_jbang.sh install_jdk.sh clean.sh && \
+    analyze_size.sh after-clean
 
 # 固化端口
 EXPOSE 8888
