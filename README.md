@@ -156,7 +156,7 @@ docker-compose restart
   std::cout << "C++17: " << num << ", " << pi << ", " << greeting << std::endl;
   ```
 
-- **C++20 示例（手动复制 C++11 内核为 C++20 并修改 kernel.json 替换 11 为 20 后使用）**
+- **C++20 示例（手动复制 C++17 内核为 C++20 并修改 kernel.json 替换内容 17 为 20 后使用）**
 
   ```cpp
   #include <iostream>
@@ -170,6 +170,15 @@ docker-compose restart
       std::cout << s << " ";
   }
   std::cout << std::endl;
+  ```
+
+- **C++23 示例（手动复制 C++20 内核为 C++23 并修改 kernel.json 替换内容 20 为 23 后使用）**
+
+  ```cpp
+  #include <print>
+
+  // 简单打印
+  std::print("C++23: Welcome to C++23, {}!", "User");
   ```
 
 ## 已知问题与调试
@@ -700,21 +709,24 @@ analyze_size.sh after-clean after-install
 - **analyze_size.sh 检查结果，得到的日志结果如下**
 - **总结：似乎镜像无法优化了，已到绝处，无法逢生，在绝对的力量面前任何优化手段都毫无意义😮‍💨**
 ```plaintext
-(py3.12.10) root@9716c6d8b74e:/notebook# analyze_size.sh after-install before-install
+(py3.12.10) root@fb4b44bc7f4a:/notebook# analyze_size.sh after-install before-install
 [信息] 快照 after-install 已存在，跳过采集。如需更新请使用 --force 参数。
-=== [after-install] 镜像体积快照 2025-04-26 04:05:02 ===
+=== [after-install] 镜像体积快照 2025-05-01 05:13:49 ===
 
 /opt/jdk-25+9   297MB
-/opt/Miniforge  7GB
-/root/.bashrc   4KB
+/opt/Miniforge  5GB
+/root/.bashrc   3KB
+/root/.cache    2MB
 /root/.conda    30b
+/root/.ipython  0b
 /root/.jbang    203MB
+/root/.jupyter  32b
 /root/.local    328b
 /root/.m2       2MB
 /root/.mamba    0b
 /root/.profile  391b
 /root/.ssh      0b
-/usr/local/bin  34KB
+/usr/local/bin  41KB
 /usr/local/etc  0b
 /usr/local/games        0b
 /usr/local/include      0b
@@ -737,16 +749,19 @@ analyze_size.sh after-clean after-install
 🔍 [对比] before-install ➜ after-install 体积变化:
 
 /opt/jdk-25+9           297MB ->(+297MB)
-/opt/Miniforge          7GB ->(+7GB)
-/root/.bashrc           4KB ->(+706b)
+/opt/Miniforge          5GB ->(+5GB)
+/root/.bashrc           3KB ->(+259b)
+/root/.cache            2MB ->(+2MB)
 /root/.conda            30b ->(+30b)
+/root/.ipython          0b ->(0b)
 /root/.jbang            203MB ->(+203MB)
+/root/.jupyter          32b ->(+32b)
 /root/.local            328b ->(+328b)
 /root/.m2               2MB ->(+2MB)
 /root/.mamba            0b ->(0b)
 /root/.profile          391b ->(+259b)
 /root/.ssh              0b ->(0b)
-/usr/local/bin          34KB ->(0b)
+/usr/local/bin          41KB ->(0b)
 /usr/local/etc          0b ->(0b)
 /usr/local/games        0b ->(0b)
 /usr/local/include      0b ->(0b)
@@ -768,15 +783,18 @@ analyze_size.sh after-clean after-install
 ```
 
 ```plaintext
-(py3.12.10) root@9716c6d8b74e:/notebook# analyze_size.sh after-clean after-install
+(py3.12.10) root@fb4b44bc7f4a:/notebook# analyze_size.sh after-clean after-install
 [信息] 快照 after-clean 已存在，跳过采集。如需更新请使用 --force 参数。
-=== [after-clean] 镜像体积快照 2025-04-26 04:05:18 ===
+=== [after-clean] 镜像体积快照 2025-05-01 05:13:57 ===
 
 /opt/jdk-25+9   297MB
-/opt/Miniforge  4GB
-/root/.bashrc   4KB
+/opt/Miniforge  3GB
+/root/.bashrc   3KB
+/root/.cache    0b
 /root/.conda    30b
+/root/.ipython  0b
 /root/.jbang    203MB
+/root/.jupyter  32b
 /root/.local    328b
 /root/.m2       2MB
 /root/.mamba    0b
@@ -805,16 +823,19 @@ analyze_size.sh after-clean after-install
 🔍 [对比] after-install ➜ after-clean 体积变化:
 
 /opt/jdk-25+9           297MB ->(0b)
-/opt/Miniforge          4GB ->(-3GB)
-/root/.bashrc           4KB ->(0b)
+/opt/Miniforge          3GB ->(-2GB)
+/root/.bashrc           3KB ->(0b)
+/root/.cache            0b ->(-2MB)
 /root/.conda            30b ->(0b)
+/root/.ipython          0b ->(0b)
 /root/.jbang            203MB ->(0b)
+/root/.jupyter          32b ->(0b)
 /root/.local            328b ->(0b)
 /root/.m2               2MB ->(0b)
 /root/.mamba            0b ->(0b)
 /root/.profile          391b ->(0b)
 /root/.ssh              0b ->(0b)
-/usr/local/bin          9KB ->(-25KB)
+/usr/local/bin          9KB ->(-32KB)
 /usr/local/etc          0b ->(0b)
 /usr/local/games        0b ->(0b)
 /usr/local/include      0b ->(0b)
