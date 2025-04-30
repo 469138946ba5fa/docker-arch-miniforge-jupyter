@@ -6,7 +6,7 @@ source "$(dirname "$0")/common.sh"
 log_info "Starting clean of System..."
 
 # Miniforge 安装路径
-# export MINIFORGE_DIR=/opt/Miniforge
+# export MAMBA_ROOT_PREFIX=/opt/Miniforge
 
 # 清理 APT 缓存
 clean_apt() {
@@ -68,12 +68,16 @@ perform_cleanup() {
 # 执行 Miniforge 清理操作
 miniforge_cleanup() {
   # 清理 Miniforge 缓存和安装包，这个命令在某些 linux 系统环境里似乎具有破坏性
+  # 清理 jupyter runtime 缓存（非必须）
+  #rm -frv ~/.local/share/jupyter/runtime/*
+
   log_info "miniforge Cleaning up..."
-  ${MINIFORGE_DIR}/bin/conda clean -afy
-  ${MINIFORGE_DIR}/bin/conda clean --tarballs --index-cache --packages --yes
-  find ${MINIFORGE_DIR} -follow -type f -name '*.a' -delete
-  find ${MINIFORGE_DIR} -follow -type f -name '*.pyc' -delete
-  ${MINIFORGE_DIR}/bin/conda clean --force-pkgs-dirs --all --yes
+  # 清理 conda 缓存包和 index
+  ${MAMBA_ROOT_PREFIX}/bin/conda clean -afy
+  ${MAMBA_ROOT_PREFIX}/bin/conda clean --tarballs --index-cache --packages --yes
+  find ${MAMBA_ROOT_PREFIX} -follow -type f -name '*.a' -delete
+  find ${MAMBA_ROOT_PREFIX} -follow -type f -name '*.pyc' -delete
+  ${MAMBA_ROOT_PREFIX}/bin/conda clean --force-pkgs-dirs --all --yes
 }
 
 # 主逻辑

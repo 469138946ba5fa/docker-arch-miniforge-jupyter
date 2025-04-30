@@ -41,7 +41,7 @@ miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器
 
 - **多语言支持**  
   - Python 内核  
-  - C++ 内核：默认提供 C++11、C++14、C++17 内核，手动修改配置后可以扩展支持 C++20。
+  - C++ 内核：默认提供 C++11、C++14、C++17 内核，手动修改配置后可以扩展支持 C++20/23，发现通过调整不同的安装方式可以解决过去的某些崩溃问题，但不是全部问题
   - Java 内核：通过 jbang 与 Java（jdk 25）部署相应内核。
 
 - **自动化配置**  
@@ -136,7 +136,7 @@ docker-compose restart
   std::cout << "C++11: Sum of squares is " << sumOfSquares << std::endl;
   ```
 
-- **C++14 示例（失败了☹️）**
+- **C++14 示例**
 
   ```cpp
   #include <iostream>
@@ -146,7 +146,7 @@ docker-compose restart
   std::cout << "C++14: 10 + 20 = " << add(10, 20) << std::endl;
   ```
 
-- **C++17 示例（失败了☹️）**
+- **C++17 示例**
   ```cpp
   #include <iostream>
   #include <tuple>
@@ -156,7 +156,7 @@ docker-compose restart
   std::cout << "C++17: " << num << ", " << pi << ", " << greeting << std::endl;
   ```
 
-- **C++20 示例（手动复制 C++11 内核并修改 kernel.json 后使用，失败了☹️）**
+- **C++20 示例（手动复制 C++11 内核为 C++20 并修改 kernel.json 替换 11 为 20 后使用）**
 
   ```cpp
   #include <iostream>
@@ -173,10 +173,12 @@ docker-compose restart
   ```
 
 ## 已知问题与调试
-- github 仓库 ghcr.io 推送一直不显示 docker 镜像标签信息☹️
-- github 仓库 ghcr.io 推送 --output 导出器 type=oci-mediatypes=false 关闭OCI索引，然而失败了☹️
-- amd64 架构镜像 C++17 崩溃，arm64 架构镜像 C++14/17 崩溃  
-- 如遇 C++14/C++17/C++20 内核加载时出现标准库或 ABI 不匹配错误，请检查容器中安装的 GCC/libstdc++ 版本与 xeus-cling 预编译包是否一致。可考虑在 kernel.json 中添加额外编译参数（例如 `-D_GLIBCXX_USE_CXX11_ABI=1`）或调整基础镜像，这是失败的思路☹️。
+- arm64 架构镜像 C++14/17/20/23 崩溃，大概是官方对arm64架构的处理器支持不够完善，所以被我手动剔除了，如图：
+![2](images/2.png)
+
+- amd64 架构镜像 C++23 崩溃，大概是官方对amd64处理器支持不够用完善，但是我觉得有研究价值所以保留了，如图：
+![3](images/3.png)
+
 - 若 Jupyter 配置（密码、默认终端或主题）未生效，请检查容器启动日志中是否正确生成 `~/.jupyter` 下的配置文件。
 - 容量太大，个人学习使用还可以，共享出来也少有人能用上，构建出这么大的镜像不如安装到本机
 

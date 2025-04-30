@@ -9,16 +9,19 @@ ARG TZ='Asia/Shanghai'
 ARG CONDA_CHANNELS=defaults
 ARG PIP_CHANNELS='https://pypi.org/simple'
 ARG PY_VERSION=3.12.10
+ARG CONDA_PY_ENV=py${PY_VERSION}
 # install_jdk.sh 所需临时环境变量
 ARG JDK_VERSION=25
 # ENV 需要固化的临时环境
 ARG BUILD_HOME=/root
-ARG MINIFORGE_DIR=/opt/Miniforge
+ARG MAMBA_ROOT_PREFIX=/opt/Miniforge
 ARG JAVA_HOME=${BUILD_HOME}/.jbang/currentjdk
+ARG CLASSPATH=.:${JAVA_HOME}/lib
+ARG PATH=${MAMBA_ROOT_PREFIX}/bin:${BUILD_HOME}/.jbang/bin:${JAVA_HOME}/bin:${PATH}
 
 # 固化运行环境变量，全局构建和容器运行都可用，字符支持，安装目录，以及启动路径
 # init_system.sh 所需固化环境 LANG=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8 LANGUAGE=zh_CN.UTF-8 LC_CTYPE=zh_CN.UTF-8
-# install_miniforge.sh install_jupyter.sh clean.sh 所需固化环境 MINIFORGE_DIR=/opt/Miniforge PATH=${MINIFORGE_DIR}/bin:${PATH}
+# install_miniforge.sh install_jupyter.sh clean.sh 所需固化环境 MAMBA_ROOT_PREFIX=/opt/Miniforge PATH=${MAMBA_ROOT_PREFIX}/bin:${PATH}
 # install_jbang.sh 所需固化环境 PATH=$HOME/.jbang/bin:${PATH}
 # install_jdk.sh 所需固化环境 JAVA_HOME=$HOME/.jbang/currentjdk CLASSPATH=.:$JAVA_HOME/lib PATH=$PATH:$JAVA_HOME/bin
 # start_jupyter.sh 所需全部固化环境
@@ -26,10 +29,11 @@ ENV LANG=zh_CN.UTF-8 \
     LC_ALL=zh_CN.UTF-8 \
     LANGUAGE=zh_CN.UTF-8 \
     LC_CTYPE=zh_CN.UTF-8 \
+    MAMBA_ROOT_PREFIX=${MAMBA_ROOT_PREFIX} \
     JAVA_HOME=${JAVA_HOME} \
-    CLASSPATH=.:${JAVA_HOME}/lib \
-    CONDA_PY_ENV=py${PY_VERSION} \
-    PATH=${MINIFORGE_DIR}/bin:${BUILD_HOME}/.jbang/bin:${JAVA_HOME}/bin:${PATH}
+    CLASSPATH=${CLASSPATH} \
+    CONDA_PY_ENV=${CONDA_PY_ENV} \
+    PATH=${PATH}
 
 # 添加常用LABEL（根据需要修改）添加标题 版本 作者 代码仓库 镜像说明，方便优化
 LABEL org.opencontainers.image.description="miniforge 安装 jupyter notebook 封装特殊需求自用 python 测试容器." \

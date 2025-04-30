@@ -81,7 +81,10 @@ if [[ -f "/tmp/${TARGET_FILE}" ]]; then
 
   # 下载新的 SHA256 文件
   log_info "Downloading SHA256 file..."
+  # 临时取消 set -e（如果你之前开启了严格模式）防止炸脚本
+  set +e
   curl -L -C - --retry 3 --retry-delay 5 --progress-bar -o "/tmp/${SHA256_FILE}" "${URI_SHA256}"
+  set -e
 
   # 校验文件完整性
   # shasum 校验依赖 perl 可能 linux 系统需要手动安装
@@ -98,7 +101,10 @@ fi
 # 如果文件不存在或之前校验失败
 if [[ ! -f "/tmp/${TARGET_FILE}" ]]; then
   log_info "Downloading file..."
+  # 临时取消 set -e（如果你之前开启了严格模式）防止炸脚本
+  set +e
   curl -L -C - --retry 3 --retry-delay 5 --progress-bar -o "/tmp/${TARGET_FILE}" "${URI_DOWNLOAD}"
+  set -e
 
   # 删除旧的 SHA256 文件并重新下载
   if [[ -f "/tmp/${SHA256_FILE}" ]]; then
@@ -106,7 +112,10 @@ if [[ ! -f "/tmp/${TARGET_FILE}" ]]; then
     rm -fv "/tmp/${SHA256_FILE}"
   fi
   log_info "Downloading SHA256 file..."
-  curl -L --progress-bar -o "/tmp/${SHA256_FILE}" "${URI_SHA256}"
+  # 临时取消 set -e（如果你之前开启了严格模式）防止炸脚本
+  set +e
+  curl -L -C - --retry 3 --retry-delay 5 --progress-bar -o "/tmp/${SHA256_FILE}" "${URI_SHA256}"
+  set -e
 
   # 校验完整性
   # shasum 校验依赖 perl 可能 linux 系统需要手动安装
