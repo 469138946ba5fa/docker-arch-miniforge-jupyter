@@ -68,7 +68,28 @@ docker-compose up -d
 例如，通过 docker 运行容器：
 
 ```bash
-docker run --rm -it -p 8888:8888 ghcr.io/469138946ba5fa/docker-arch-miniforge-jupyter:latest tini -- "/usr/local/bin/start_jupyter.sh"
+# 后台运行
+# --rm 不能和 --restart=always 一起用，这是两个相反的命令
+# 要么用 --rm 容器终止即删除
+# 要么用 --restart=always 容器中断自动重启
+docker run --restart=always \
+  --name miniforge_jupyter_container \
+  -it -d \
+  -p 8888:8888 \
+  -e JUPYTER_PASSWORD=123456 \
+  -v "./jupyter/notebook:/notebook" \
+  -v "./jupyter/.jupyter:/root/.jupyter" \
+  ghcr.io/469138946ba5fa/docker-arch-miniforge-jupyter:latest \
+  sh -c "tini -- /usr/local/bin/start_jupyter.sh"
+
+# 查看日志
+docker logs -f miniforge_jupyter_container
+
+# 终止容器
+docker stop miniforge_jupyter_container
+
+# 删除容器
+docker rm -fv miniforge_jupyter_container
 ```
 
 ### 访问 JupyterLab
