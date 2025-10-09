@@ -1,0 +1,44 @@
+name: Cleanup Git Repository Large Files
+
+on:
+  workflow_dispatch:
+  # Uncomment below to schedule daily cleanup at midnight UTC
+  # schedule:
+  #   - cron: '0 0 * * *'
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install diagnostic tools
+        run: |
+          sudo apt update
+          sudo apt-get install -y neofetch
+          neofetch
+
+      - name: Download BFG Repo-Cleaner
+        run: |
+          mkdir -p temp_bfg
+          wget -q https://repo1.maven.org/maven2/com/madgag/bfg/1.14.0/bfg-1.14.0.jar -O temp_bfg/bfg.jar
+
+      - name: Clean repository large files
+        run: |
+          java -jar temp_bfg/bfg.jar --strip-blobs-bigger-than 1B .
+          rm -rf ..bfg-report
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          git config --global --add safe.directory "${{ github.workspace }}"
+          git reflog expire --expire=now --all
+          git gc --prune=now --aggressive
+
+      - name: Push cleaned repository changes
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: master
+          force: true
